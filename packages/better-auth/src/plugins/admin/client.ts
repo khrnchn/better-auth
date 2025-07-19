@@ -3,6 +3,8 @@ import { type AccessControl, type Role } from "../access";
 import { adminAc, defaultStatements, userAc } from "./access";
 import type { admin } from "./admin";
 import { hasPermission } from "./has-permission";
+import { isAdmin } from "./is-admin";
+import type { UserWithRole, AdminOptions } from "./types";
 
 interface AdminClientOptions {
 	ac?: AccessControl;
@@ -77,6 +79,35 @@ export const adminClient = <O extends AdminClientOptions>(options?: O) => {
 						permissions: (data.permissions ?? data.permission) as any,
 					});
 					return isAuthorized;
+				},
+				/**
+				 * Simple utility to check if a user has admin privileges
+				 * 
+				 * @param user - User object with id and optional role information
+				 * @param adminOptions - Optional admin plugin options (uses client plugin options if not provided)
+				 * @returns boolean indicating admin status
+				 * 
+				 * @example
+				 * ```ts
+				 * // Basic usage
+				 * const userIsAdmin = authClient.admin.isAdmin(session?.user);
+				 * 
+				 * // With custom options
+				 * const userIsAdmin = authClient.admin.isAdmin(user, { 
+				 *   adminRoles: ['admin', 'superuser'] 
+				 * });
+				 * ```
+				 */
+				isAdmin: (
+					user: UserWithRole | { id: string; role?: string } | null | undefined,
+					adminOptions?: AdminOptions,
+				): boolean => {
+					// Use provided options or fall back to client plugin options
+					const effectiveOptions: AdminOptions = {
+						...options,
+						...adminOptions,
+					};
+					return isAdmin(user, effectiveOptions);
 				},
 			},
 		}),
